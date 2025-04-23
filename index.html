@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dungeon Game</title>
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+  <!-- Auth buttons -->
+  <div id="auth-buttons">
+    <button data-action="login">Login</button>
+    <button data-action="register">Register</button>
+  </div>
+
+  <!-- Main menu -->
+  <div id="menu">
+    <h1>Dungeon Game</h1>
+    <div id="menu-buttons">
+      <button data-action="start">Start Game</button>
+      <button data-action="character">Character</button>
+      <button data-action="shop">Shop</button>
+      <button data-action="exit">Exit</button>
+    </div>
+  </div>
+
+  <!-- Game canvas wrapper -->
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
