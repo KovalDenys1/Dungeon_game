@@ -1,0 +1,107 @@
+🎮 Spillarkitektur
+Hovedkomponenter
+Klientside (Frontend)
+
+Kjerne i JavaScript + Canvas for å tegne grafikk
+
+Responsivt grensesnitt for mobil (virtuell joystick, bevegelser)
+
+Animasjonssystem: sprites for helten, fiender og bosser (2–3 bilder per handling)
+
+Serverside (Backend)
+
+Node.js for kamp-logikk og PvP-synkronisering (i fremtiden)
+
+PostgreSQL for lagring av:
+
+Spillerprogresjon (nivåer, gull, utstyr)
+
+Boss- og fiendeparametere
+
+Rangeringer og prestasjoner
+
+Verdenskart
+
+Lokasjoner:
+
+🏟️ Arena (fiendebølger, valg av vanskelighetsgrad)
+🛒 Butikk (kjøp av våpen, potions, oppgraderinger)
+🐉 Boss-soner (tilgjengelig etter å ha oppfylt visse krav)
+
+⚔️ Kjerne-mekanikker
+Kampsystem
+
+Kombo-angrep: angrepskjede med økt skade
+
+Blokkering: reduserer skade med 50 % (bruker stamina)
+
+Rulling: unnvikelse med midlertidig usårbarhet
+
+Evner: aktiverbare ferdigheter (f.eks. ildkule eller helbredelse)
+
+Karakterutvikling
+Oppgraderbare attributter:
+❤️ Helse (maks +100 per nivå)
+⚡ Stamina (flere ruller/blokkeringer)
+🔪 Skade (grunnskade +20 % per nivå)
+
+Bosser
+Unike mekanikker:
+🛡️ Stein-golem: sårbar kun for magisk skade
+🌪️ Vindhersker: krever unnvikelse fra tornadoer
+🔥 Drage: angriper med ildbølger (krever skjold med ildresistens)
+
+🎨 Grafikk og ressurser
+Stil: pikselkunst med lav oppløsning (16x16 eller 32x32 piksler)
+Ressurser for nybegynnere:
+
+Gratis tilesets fra OpenGameArt
+
+Verktøy: Aseprite, Piskel
+
+Animasjoner:
+
+Helt: løping, hopping, angrep med sverd/bue
+
+Fiender: 2–3 typer (gobliner, skjeletter, flygende demoner)
+
+📅 Utviklingsplan
+Prototype (2 uker):
+
+Plattformmotor med Canvas
+
+Grunnleggende slag/unnvikelse
+
+Spillkjerne (1 måned):
+
+Bølgesystem på arenaen
+
+Butikk med 3–4 typer utstyr
+
+Første boss (test)
+
+Innhold (2 måneder):
+
+5 unike bosser
+
+Ferdighetstre med 10+ evner
+
+Mobiltilpasning
+
+Nettverksdel (1 måned):
+
+Innlogging og lagring av progresjon
+
+Forberedelse til PvP (grunnsynkronisering)
+
+💡 Tips for nybegynnere
+
+Start med å lage en MVP (minimal versjon) med én boss og arena
+
+Bruk Phaser.js for enklere animasjoner og kollisjoner
+
+For balanse i progresjon:
+
+Vanskelighetsgrad = (spillernivå × 1.5) + antall bølger
+
+Spillet kombinerer enkel gjennomføring med dyp strategi i valg av utstyr mot bosser. Suksess avhenger ikke bare av progresjon, men også av å analysere fiendens svakheter! 🚀
