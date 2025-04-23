@@ -1,5 +1,6 @@
 import Player from './player.js';
 import GameMap from './map.js';
+import Enemy from './enemy.js';
 
 const menu = document.getElementById('menu');
 const canvas = document.getElementById('gameCanvas');
@@ -19,6 +20,7 @@ canvas.style.height = `${GAME_HEIGHT * SCALE}px`;
 
 let player;
 let map;
+let enemies = [];
 
 buttons.forEach(button => {
   button.addEventListener('click', () => {
@@ -43,6 +45,20 @@ buttons.forEach(button => {
   });
 });
 
+function getFreeTile(map) {
+    const height = map.length;
+    const width = map[0].length;
+  
+    while (true) {
+      const x = Math.floor(Math.random() * width);
+      const y = Math.floor(Math.random() * height);
+  
+      if (map[y][x] === 0) {
+        return { x, y };
+      }
+    }
+  }
+  
 authButtons.forEach(button => {
   button.addEventListener('click', () => {
     const action = button.dataset.action;
@@ -66,6 +82,14 @@ player = new Player(
   map.map
 );
 
+const e1 = getFreeTile(map.map);
+const e2 = getFreeTile(map.map);
+
+enemies = [
+  new Enemy(e1.x * 16 * SCALE, e1.y * 16 * SCALE, SCALE, 'skeleton'),
+  new Enemy(e2.x * 16 * SCALE, e2.y * 16 * SCALE, SCALE, 'vampire')
+];
+  
   
     let lastTime = 0;
   
@@ -79,6 +103,12 @@ player = new Player(
       player.update(deltaTime);
       player.draw(ctx);
   
+      enemies.forEach(enemy => {
+        enemy.update(deltaTime, player, map.map);
+        enemy.draw(ctx);
+      });      
+      
+
       requestAnimationFrame(gameLoop);
     }
   
