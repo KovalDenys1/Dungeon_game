@@ -77,3 +77,20 @@ body {
     image-rendering: pixelated;
     background-color: #1a0f1a;
   }  
+
+  #spell-ui {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+  }
+  
+  #spell-ui button {
+    padding: 10px 20px;
+    font-size: 1em;
+    background: #ff6600;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  

@@ -1,6 +1,10 @@
 import Player from './player.js';
 import GameMap from './map.js';
 import Enemy from './enemy.js';
+import { spells } from './spells.js';
+
+let projectiles = [];
+
 
 const menu = document.getElementById('menu');
 const canvas = document.getElementById('gameCanvas');
@@ -19,6 +23,7 @@ canvas.style.width = `${GAME_WIDTH * SCALE}px`;
 canvas.style.height = `${GAME_HEIGHT * SCALE}px`;
 
 let player;
+let currentSpell = 'fireball';
 let map;
 let enemies = [];
 
@@ -43,6 +48,16 @@ buttons.forEach(button => {
         break;
     }
   });
+});
+
+document.getElementById('castButton').addEventListener('click', () => {
+  spells[currentSpell](player, canvas.getContext('2d'), projectiles);
+});
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'f') {
+    spells[currentSpell](player, canvas.getContext('2d'), projectiles);
+  }
 });
 
 function getFreeTile(map) {
@@ -97,7 +112,7 @@ enemies = [
       const deltaTime = timeStamp - lastTime;
       lastTime = timeStamp;
   
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+     ctx.clearRect(0, 0, canvas.width, canvas.height);
   
       map.draw(ctx);
       player.update(deltaTime);
@@ -108,9 +123,15 @@ enemies = [
         enemy.draw(ctx);
       });      
       
+      projectiles.forEach(p => {
+        p.update(deltaTime);
+        p.draw(ctx);
+      });
+      projectiles = projectiles.filter(p => !p.markedForDeletion);
+      
 
       requestAnimationFrame(gameLoop);
     }
-  
+
     requestAnimationFrame(gameLoop);
   }  

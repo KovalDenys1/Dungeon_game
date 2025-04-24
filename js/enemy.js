@@ -2,7 +2,7 @@ export default class Enemy {
     constructor(x, y, scale, type = 'skeleton') {
       this.x = x;
       this.y = y;
-      this.startX = x; // исходная позиция
+      this.startX = x;
       this.scale = scale;
   
       this.width = 16 * scale;
@@ -19,11 +19,9 @@ export default class Enemy {
       this.speed = type === 'vampire' ? 0.8 : 0.5;
       this.tileSize = 16 * scale;
   
-      // Патруль
-      this.patrolRange = 64 * scale; // пикселей влево/вправо
+      this.patrolRange = 64 * scale;
       this.patrolDirection = 1;
   
-      // Агро
       this.agroRadius = 40 * scale;
       this.agro = false;
     }
@@ -39,7 +37,6 @@ export default class Enemy {
       const dy = player.y - this.y;
       const dist = Math.hypot(dx, dy);
   
-      // Активация агро
       this.agro = dist < this.agroRadius;
   
       if (this.agro) {
@@ -52,7 +49,6 @@ export default class Enemy {
         if (!this.isColliding(newX, this.y, map)) this.x = newX;
         if (!this.isColliding(this.x, newY, map)) this.y = newY;
       } else {
-        // Патрулируем влево/вправо
         const nextX = this.x + this.patrolDirection * this.speed;
         const minX = this.startX - this.patrolRange;
         const maxX = this.startX + this.patrolRange;
@@ -60,7 +56,7 @@ export default class Enemy {
         if (!this.isColliding(nextX, this.y, map)) {
           this.x = nextX;
           if (this.x < minX || this.x > maxX) {
-            this.patrolDirection *= -1; // разворот
+            this.patrolDirection *= -1;
           }
         } else {
           this.patrolDirection *= -1;
