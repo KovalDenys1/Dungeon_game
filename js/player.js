@@ -4,7 +4,7 @@ export default class Player {
     this.y = y;
     this.scale = scale;
     this.tileSize = 16;
-    this.speed = 1.5;
+    this.speed = 1;
 
     this.frameWidth = 16;
     this.frameHeight = 16;

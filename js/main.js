@@ -16,6 +16,9 @@ const GAME_WIDTH = 512;
 const GAME_HEIGHT = 288;
 const SCALE = 2;
 
+let cameraX = 0;
+let cameraY = 0;
+
 canvas.width = GAME_WIDTH;
 canvas.height = GAME_HEIGHT;
 
@@ -82,56 +85,71 @@ authButtons.forEach(button => {
 });
 
 function startGame() {
-    const ctx = canvas.getContext('2d');
-  
-    map = new GameMap(16, SCALE);
-  
-    const spawnTileX = 1;
-const spawnTileY = 1;
-const tileSize = 16;
+  const ctx = canvas.getContext('2d');
 
-player = new Player(
-  spawnTileX * tileSize * SCALE,
-  spawnTileY * tileSize * SCALE,
-  SCALE,
-  map.map
-);
+  map = new GameMap(16, SCALE);
 
-const e1 = getFreeTile(map.map);
-const e2 = getFreeTile(map.map);
+  const spawnTileX = 1;
+  const spawnTileY = 1;
+  const tileSize = 16;
 
-enemies = [
-  new Enemy(e1.x * 16 * SCALE, e1.y * 16 * SCALE, SCALE, 'skeleton'),
-  new Enemy(e2.x * 16 * SCALE, e2.y * 16 * SCALE, SCALE, 'vampire')
-];
-  
-  
-    let lastTime = 0;
-  
-    function gameLoop(timeStamp) {
-      const deltaTime = timeStamp - lastTime;
-      lastTime = timeStamp;
-  
-     ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-      map.draw(ctx);
-      player.update(deltaTime);
-      player.draw(ctx);
-  
-      enemies.forEach(enemy => {
-        enemy.update(deltaTime, player, map.map);
-        enemy.draw(ctx);
-      });      
-      
-      projectiles.forEach(p => {
-        p.update(deltaTime);
-        p.draw(ctx);
-      });
-      projectiles = projectiles.filter(p => !p.markedForDeletion);
-      
+  player = new Player(
+    spawnTileX * tileSize * SCALE,
+    spawnTileY * tileSize * SCALE,
+    SCALE,
+    map.map
+  );
 
-      requestAnimationFrame(gameLoop);
-    }
+  const e1 = getFreeTile(map.map);
+  const e2 = getFreeTile(map.map);
+
+  enemies = [
+    new Enemy(e1.x * 16 * SCALE, e1.y * 16 * SCALE, SCALE, 'skeleton'),
+    new Enemy(e2.x * 16 * SCALE, e2.y * 16 * SCALE, SCALE, 'vampire')
+  ];
+
+  let lastTime = 0;
+
+  function gameLoop(timeStamp) {
+    const deltaTime = timeStamp - lastTime;
+    lastTime = timeStamp;
+
+    // 📍 Update camera position
+    cameraX = player.x + player.width / 2 - canvas.width / 2;
+    cameraY = player.y + player.height / 2 - canvas.height / 2;
+
+    // 📍 Clamp camera to map bounds
+    const mapWidthPx = map.map[0].length * 16 * SCALE;
+    const mapHeightPx = map.map.length * 16 * SCALE;
+
+    cameraX = Math.max(0, Math.min(cameraX, mapWidthPx - canvas.width));
+    cameraY = Math.max(0, Math.min(cameraY, mapHeightPx - canvas.height));
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.save(); // 📍 Start camera transform
+    ctx.translate(-cameraX, -cameraY);
+
+    // 📍 Draw world relative to camera
+    map.draw(ctx);
+    player.update(deltaTime);
+    player.draw(ctx);
+
+    enemies.forEach(enemy => {
+      enemy.update(deltaTime, player, map.map);
+      enemy.draw(ctx);
+    });
+
+    projectiles.forEach(p => {
+      p.update(deltaTime);
+      p.draw(ctx);
+    });
+    projectiles = projectiles.filter(p => !p.markedForDeletion);
+
+    ctx.restore(); // 📍 End camera transform
 
     requestAnimationFrame(gameLoop);
-  }  
+  }
+
+  requestAnimationFrame(gameLoop);
+}
