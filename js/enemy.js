@@ -19,17 +19,18 @@ export default class Enemy {
 
     this.facingLeft = false;
 
-    // Patrol system
+    this.hp = type === 'vampire' ? 50 : 30;
+    this.maxHp = this.hp;
+
+    this.agroRadius = 40 * scale;
+    this.isChasing = false;
+    this.chaseCooldown = 0;
+    this.chaseCooldownMax = 3000;
+
     this.patrolStartX = x;
     this.patrolDistance = 96 * scale;
     this.patrolDirection = Math.random() > 0.5 ? 1 : -1;
     this.targetX = this.patrolStartX + this.patrolDistance * this.patrolDirection;
-
-    // Agro system
-    this.agroRadius = 50 * scale;
-    this.isChasing = false;
-    this.chaseCooldown = 0;
-    this.chaseCooldownMax = 3000; // milliseconds
   }
 
   update(deltaTime, player, map) {
@@ -43,7 +44,6 @@ export default class Enemy {
     const dy = player.y - this.y;
     const dist = Math.hypot(dx, dy);
 
-    // Agro detection
     if (dist < this.agroRadius) {
       this.isChasing = true;
       this.chaseCooldown = 0;
@@ -51,11 +51,9 @@ export default class Enemy {
       this.chaseCooldown += deltaTime;
       if (this.chaseCooldown > this.chaseCooldownMax) {
         this.isChasing = false;
-        this.chaseCooldown = 0;
       }
     }
 
-    // Choose behavior
     if (this.isChasing) {
       this.moveTowards(player.x, player.y, map);
     } else {
@@ -79,7 +77,6 @@ export default class Enemy {
     const absDx = Math.abs(dx);
     const absDy = Math.abs(dy);
 
-    // Prioritize movement along the dominant axis
     if (absDx > absDy) {
       if (!this.isColliding(nextX, this.y, map)) {
         this.x = nextX;
@@ -105,23 +102,14 @@ export default class Enemy {
       this.x = nextX;
       this.facingLeft = moveX < 0;
 
-      // Reached patrol limit → turn around
-      if (
-        (this.patrolDirection === 1 && this.x >= this.targetX) ||
-        (this.patrolDirection === -1 && this.x <= this.targetX)
-      ) {
+      if ((this.patrolDirection === 1 && this.x >= this.targetX) ||
+          (this.patrolDirection === -1 && this.x <= this.targetX)) {
         this.patrolDirection *= -1;
         this.targetX = this.patrolStartX + this.patrolDistance * this.patrolDirection;
       }
     } else {
-      // Hit wall → turn and try step back
       this.patrolDirection *= -1;
       this.targetX = this.patrolStartX + this.patrolDistance * this.patrolDirection;
-
-      const backupX = this.x + this.patrolDirection * this.speed * 5;
-      if (!this.isColliding(backupX, this.y, map)) {
-        this.x += this.patrolDirection * this.speed * 5;
-      }
     }
   }
 
@@ -139,22 +127,21 @@ export default class Enemy {
       const tileY = Math.floor(cy / tileSize);
       if (map?.[tileY]?.[tileX] !== 0) return true;
     }
-
     return false;
   }
 
   draw(ctx) {
     const flip = this.facingLeft;
-
+  
     ctx.save();
-
+  
     if (flip) {
       ctx.translate(this.x + this.width, this.y);
       ctx.scale(-1, 1);
     } else {
       ctx.translate(this.x, this.y);
     }
-
+  
     if (this.image && this.image.naturalWidth > 0) {
       ctx.drawImage(
         this.image,
@@ -168,7 +155,21 @@ export default class Enemy {
       ctx.fillStyle = 'red';
       ctx.fillRect(0, 0, this.width, this.height);
     }
-
+  
     ctx.restore();
-  }
+  
+    // ➡️ HP bar above enemy
+    const barWidth = this.width;
+    const barHeight = 4;
+    const healthRatio = this.hp / this.maxHp;
+  
+    ctx.fillStyle = 'red';
+    ctx.fillRect(this.x, this.y - 10, barWidth, barHeight);
+  
+    ctx.fillStyle = 'lime';
+    ctx.fillRect(this.x, this.y - 10, barWidth * healthRatio, barHeight);
+  
+    ctx.strokeStyle = 'black';
+    ctx.strokeRect(this.x, this.y - 10, barWidth, barHeight);
+  }  
 }
