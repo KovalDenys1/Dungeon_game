@@ -27,26 +27,18 @@ let enemies = [];
 
 let cameraX = 0;
 let cameraY = 0;
+let lastTime = 0;
+let gameStarted = false;
 
 // === UI buttons
 buttons.forEach(button => {
   button.addEventListener('click', () => {
     const action = button.dataset.action;
-    switch (action) {
-      case 'start':
-        menu.style.display = 'none';
-        gameContainer.style.display = 'flex';
-        startGame();
-        break;
-      case 'character':
-        alert('Character menu (coming soon)');
-        break;
-      case 'shop':
-        alert('Shop menu (coming soon)');
-        break;
-      case 'exit':
-        alert('Thanks for playing!');
-        break;
+    if (action === 'start' && !gameStarted) {
+      gameStarted = true;
+      menu.style.display = 'none';
+      gameContainer.style.display = 'flex';
+      startGame();
     }
   });
 });
@@ -103,7 +95,6 @@ function startGame() {
 
   const tileSize = 16;
 
-  // Spawn player near center (or nearby free tile)
   let centerX = Math.floor(map.map[0].length / 2);
   let centerY = Math.floor(map.map.length / 2);
 
@@ -117,7 +108,6 @@ function startGame() {
 
   console.log('Player HP:', player.hp, '/', player.maxHp);
 
-  // Spawn enemies
   enemies = [];
   const enemyCount = 6 + Math.floor(Math.random() * 5);
 
@@ -127,70 +117,71 @@ function startGame() {
     enemies.push(new Enemy(spawn.x * tileSize * SCALE, spawn.y * tileSize * SCALE, SCALE, type));
   }
 
-  let lastTime = 0;
+  lastTime = performance.now();
+  requestAnimationFrame(gameLoop);
+}
 
-  function gameLoop(timeStamp) {
-    if (!player) {
-      requestAnimationFrame(gameLoop);
-      return;
-    }
-  
-    const deltaTime = timeStamp - lastTime;
-    lastTime = timeStamp;
-  
-    cameraX = player.x + player.width / 2 - canvas.width / 2;
-    cameraY = player.y + player.height / 2 - canvas.height / 2;
-  
-    const mapWidthPx = map.map[0].length * 16 * SCALE;
-    const mapHeightPx = map.map.length * 16 * SCALE;
-  
-    cameraX = Math.max(0, Math.min(cameraX, mapWidthPx - canvas.width));
-    cameraY = Math.max(0, Math.min(cameraY, mapHeightPx - canvas.height));
-  
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-    // Draw HP bar
-    drawPlayerHpBar(ctx);
-  
-    ctx.save();
-    ctx.translate(-cameraX, -cameraY);
-  
-    // Draw world
-    map.draw(ctx);
-    player.update(deltaTime);
-    player.draw(ctx);
-  
-    enemies.forEach(enemy => {
-      enemy.update(deltaTime, player, map.map);
-      enemy.draw(ctx);
-    });
-  
-    projectiles.forEach(p => {
-      p.update(deltaTime);
-      p.draw(ctx);
-    });
-    projectiles = projectiles.filter(p => !p.markedForDeletion);
-  
-    // Fireball collisions
-    projectiles.forEach(projectile => {
-      enemies.forEach(enemy => {
-        const dx = (enemy.x + enemy.width / 2) - (projectile.x + 8);
-        const dy = (enemy.y + enemy.height / 2) - (projectile.y + 8);
-        const dist = Math.hypot(dx, dy);
-  
-        if (dist < 20) {
-          enemy.hp -= projectile.damage || 10;
-          projectile.markedForDeletion = true;
-        }
-      });
-    });
-  
-    enemies = enemies.filter(enemy => enemy.hp > 0);
-  
-    ctx.restore();
-  
+// === Main game loop
+function gameLoop(timeStamp) {
+  if (!player) {
     requestAnimationFrame(gameLoop);
-  }  
+    return;
+  }
+
+  const deltaTime = timeStamp - lastTime;
+  lastTime = timeStamp;
+
+  cameraX = player.x + player.width / 2 - canvas.width / 2;
+  cameraY = player.y + player.height / 2 - canvas.height / 2;
+
+  const mapWidthPx = map.map[0].length * 16 * SCALE;
+  const mapHeightPx = map.map.length * 16 * SCALE;
+
+  cameraX = Math.max(0, Math.min(cameraX, mapWidthPx - canvas.width));
+  cameraY = Math.max(0, Math.min(cameraY, mapHeightPx - canvas.height));
+
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.save();
+  ctx.translate(-cameraX, -cameraY);
+
+  // Draw world
+  map.draw(ctx);
+  player.update(deltaTime);
+  player.draw(ctx);
+
+  enemies.forEach(enemy => {
+    enemy.update(deltaTime, player, map.map);
+    enemy.draw(ctx);
+  });
+
+  projectiles.forEach(p => {
+    p.update(deltaTime);
+    p.draw(ctx);
+  });
+  projectiles = projectiles.filter(p => !p.markedForDeletion);
+
+  // Fireball collisions
+  projectiles.forEach(projectile => {
+    enemies.forEach(enemy => {
+      const dx = (enemy.x + enemy.width / 2) - (projectile.x + 8);
+      const dy = (enemy.y + enemy.height / 2) - (projectile.y + 8);
+      const dist = Math.hypot(dx, dy);
+
+      if (dist < 20) {
+        enemy.hp -= projectile.damage || 10;
+        projectile.markedForDeletion = true;
+      }
+    });
+  });
+
+  enemies = enemies.filter(enemy => enemy.hp > 0);
+
+  ctx.restore(); // восстановили координаты!
+
+  // === Теперь рисуем UI (полоску HP игрока) ===
+  drawPlayerHpBar(ctx);
 
   requestAnimationFrame(gameLoop);
 }
@@ -199,10 +190,10 @@ function startGame() {
 function drawPlayerHpBar(ctx) {
   if (!player) return;
 
-  const barX = 20 / SCALE;
-  const barY = 20 / SCALE;
-  const barWidth = 200 / SCALE;
-  const barHeight = 20 / SCALE;
+  const barX = 10;
+  const barY = 10;
+  const barWidth = 150;
+  const barHeight = 15;
   const healthRatio = player.hp / player.maxHp;
 
   ctx.fillStyle = 'red';
