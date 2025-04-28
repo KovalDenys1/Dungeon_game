@@ -22,15 +22,15 @@ export default class Enemy {
     this.hp = type === 'vampire' ? 50 : 30;
     this.maxHp = this.hp;
 
-    this.agroRadius = 40 * scale;
+    this.agroRadius = 100 * scale;
     this.isChasing = false;
     this.chaseCooldown = 0;
     this.chaseCooldownMax = 3000;
 
-    this.patrolStartX = x;
-    this.patrolDistance = 96 * scale;
-    this.patrolDirection = Math.random() > 0.5 ? 1 : -1;
-    this.targetX = this.patrolStartX + this.patrolDistance * this.patrolDirection;
+    // === Добавлено для атаки игрока:
+    this.attackCooldown = 0; // сколько осталось до следующей атаки
+    this.attackRate = 1000;  // монстр атакует раз в 1 секунду
+    this.damage = 10;        // сколько урона наносит монстр
   }
 
   update(deltaTime, player, map) {
@@ -39,6 +39,8 @@ export default class Enemy {
       this.frameIndex = (this.frameIndex + 1) % this.frameCount;
       this.frameTimer = 0;
     }
+
+    this.attackCooldown -= deltaTime;
 
     const dx = player.x - this.x;
     const dy = player.y - this.y;
@@ -56,6 +58,12 @@ export default class Enemy {
 
     if (this.isChasing) {
       this.moveTowards(player.x, player.y, map);
+
+      // === Атака игрока:
+      if (dist < 20 && this.attackCooldown <= 0) {
+        player.hp -= this.damage;
+        this.attackCooldown = this.attackRate; // Сброс кулдауна после атаки
+      }
     } else {
       this.patrolMove(map);
     }
@@ -95,21 +103,18 @@ export default class Enemy {
   }
 
   patrolMove(map) {
-    const moveX = this.patrolDirection * this.speed;
+    const moveX = this.speed * (Math.random() > 0.5 ? 1 : -1);
+    const moveY = this.speed * (Math.random() > 0.5 ? 1 : -1);
+
     const nextX = this.x + moveX;
+    const nextY = this.y + moveY;
 
     if (!this.isColliding(nextX, this.y, map)) {
       this.x = nextX;
       this.facingLeft = moveX < 0;
-
-      if ((this.patrolDirection === 1 && this.x >= this.targetX) ||
-          (this.patrolDirection === -1 && this.x <= this.targetX)) {
-        this.patrolDirection *= -1;
-        this.targetX = this.patrolStartX + this.patrolDistance * this.patrolDirection;
-      }
-    } else {
-      this.patrolDirection *= -1;
-      this.targetX = this.patrolStartX + this.patrolDistance * this.patrolDirection;
+    }
+    if (!this.isColliding(this.x, nextY, map)) {
+      this.y = nextY;
     }
   }
 
@@ -132,44 +137,38 @@ export default class Enemy {
 
   draw(ctx) {
     const flip = this.facingLeft;
-  
+
     ctx.save();
-  
     if (flip) {
       ctx.translate(this.x + this.width, this.y);
       ctx.scale(-1, 1);
     } else {
       ctx.translate(this.x, this.y);
     }
-  
-    if (this.image && this.image.naturalWidth > 0) {
-      ctx.drawImage(
-        this.image,
-        this.frameIndex * 16, 0,
-        16, 16,
-        0, 0,
-        this.width,
-        this.height
-      );
-    } else {
-      ctx.fillStyle = 'red';
-      ctx.fillRect(0, 0, this.width, this.height);
-    }
-  
+
+    ctx.drawImage(
+      this.image,
+      this.frameIndex * 16, 0,
+      16, 16,
+      0, 0,
+      this.width,
+      this.height
+    );
+
     ctx.restore();
-  
-    // ➡️ HP bar above enemy
+
+    // === HP бар над врагом
     const barWidth = this.width;
     const barHeight = 4;
     const healthRatio = this.hp / this.maxHp;
-  
+
     ctx.fillStyle = 'red';
     ctx.fillRect(this.x, this.y - 10, barWidth, barHeight);
-  
+
     ctx.fillStyle = 'lime';
     ctx.fillRect(this.x, this.y - 10, barWidth * healthRatio, barHeight);
-  
+
     ctx.strokeStyle = 'black';
     ctx.strokeRect(this.x, this.y - 10, barWidth, barHeight);
-  }  
+  }
 }
