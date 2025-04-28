@@ -133,22 +133,25 @@ export default class Enemy {
 
   // Check for collisions with the map
   isColliding(x, y, map) {
-    const tileSize = 16 * this.scale; // Tile size based on scale
-    const corners = [
-      [x, y], // Top-left corner
-      [x + this.width - 1, y], // Top-right corner
-      [x, y + this.height - 1], // Bottom-left corner
-      [x + this.width - 1, y + this.height - 1] // Bottom-right corner
+    const tileSize = 16 * this.scale;
+    const checkPoints = [
+      [x + 1, y + 1],
+      [x + this.width - 2, y + 1],
+      [x + 1, y + this.height - 2],
+      [x + this.width - 2, y + this.height - 2],
+      [x + this.width / 2, y + 1],
+      [x + this.width / 2, y + this.height - 2],
+      [x + 1, y + this.height / 2],
+      [x + this.width - 2, y + this.height / 2],
     ];
-
-    // Check each corner for collision with non-walkable tiles
-    for (const [cx, cy] of corners) {
+  
+    for (const [cx, cy] of checkPoints) {
       const tileX = Math.floor(cx / tileSize);
       const tileY = Math.floor(cy / tileSize);
-      if (map?.[tileY]?.[tileX] !== 0) return true; // Collision detected
+      if (map?.[tileY]?.[tileX] !== 0) return true;
     }
-    return false; // No collision
-  }
+    return false;
+  }  
 
   // Draw the enemy on the canvas
   draw(ctx) {

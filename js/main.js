@@ -102,6 +102,11 @@ function startGame() {
 
   const ctx = canvas.getContext('2d');
 
+  // Disable image smoothing
+  ctx.imageSmoothingEnabled = false;
+
+
+  
   map = new GameMap(16, SCALE); // Initialize the game map
 
   const tileSize = 16;

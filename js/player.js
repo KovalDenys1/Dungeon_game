@@ -43,57 +43,59 @@ export default class Player {
 
   // Update player state
   update(deltaTime) {
-    // Update animation frame timer
+    // Обновляем анимацию
     this.frameTimer += deltaTime;
     if (this.frameTimer > this.frameInterval) {
-      this.frameIndex = (this.frameIndex + 1) % this.frameCount; // Cycle through animation frames
-      this.frameTimer = 0; // Reset the frame timer
+      this.frameIndex = (this.frameIndex + 1) % this.frameCount;
+      this.frameTimer = 0;
     }
-
-    // Movement deltas
+  
     let dx = 0;
     let dy = 0;
-
-    // Handle movement input
+  
     if (this.keys['KeyA'] || this.keys['ArrowLeft']) {
-      dx = -this.speed; // Move left
-      this.facingLeft = true; // Face left
+      dx = -this.speed;
+      this.facingLeft = true;
     }
     if (this.keys['KeyD'] || this.keys['ArrowRight']) {
-      dx = this.speed; // Move right
-      this.facingLeft = false; // Face right
+      dx = this.speed;
+      this.facingLeft = false;
     }
-    if (this.keys['KeyW'] || this.keys['ArrowUp']) dy = -this.speed; // Move up
-    if (this.keys['KeyS'] || this.keys['ArrowDown']) dy = this.speed; // Move down
-
-    // Calculate new position
-    const newX = this.x + dx;
-    const newY = this.y + dy;
-
-    // Check for collisions before updating position
-    if (!this.isColliding(newX, this.y)) this.x = newX;
-    if (!this.isColliding(this.x, newY)) this.y = newY;
-  }
+    if (this.keys['KeyW'] || this.keys['ArrowUp']) dy = -this.speed;
+    if (this.keys['KeyS'] || this.keys['ArrowDown']) dy = this.speed;
+  
+    // Сначала пытаемся двигаться по оси X
+    if (!this.isColliding(this.x + dx, this.y)) {
+      this.x += dx;
+    }
+  
+    // Потом по оси Y
+    if (!this.isColliding(this.x, this.y + dy)) {
+      this.y += dy;
+    }
+  }  
 
   // Check for collisions with the map
   isColliding(x, y) {
-    const tileSize = 16 * this.scale; // Tile size based on scale
-    const corners = [
-      [x, y], // Top-left corner
-      [x + this.width - 1, y], // Top-right corner
-      [x, y + this.height - 1], // Bottom-left corner
-      [x + this.width - 1, y + this.height - 1] // Bottom-right corner
+    const tileSize = 16 * this.scale;
+    const checkPoints = [
+      [x + 1, y + 1],
+      [x + this.width - 2, y + 1],
+      [x + 1, y + this.height - 2],
+      [x + this.width - 2, y + this.height - 2],
+      [x + this.width / 2, y + 1],
+      [x + this.width / 2, y + this.height - 2],
+      [x + 1, y + this.height / 2],
+      [x + this.width - 2, y + this.height / 2],
     ];
-
-    // Check each corner for collision with non-walkable tiles
-    for (const [cx, cy] of corners) {
+  
+    for (const [cx, cy] of checkPoints) {
       const tileX = Math.floor(cx / tileSize);
       const tileY = Math.floor(cy / tileSize);
-      if (this.map?.[tileY]?.[tileX] !== 0) return true; // Collision detected
+      if (this.map?.[tileY]?.[tileX] !== 0) return true;
     }
-
-    return false; // No collision
-  }
+    return false;
+  }  
 
   // Draw the player on the canvas
   draw(ctx) {
