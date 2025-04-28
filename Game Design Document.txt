@@ -6,7 +6,7 @@ Kjerne i JavaScript + Canvas for å tegne grafikk
 
 Responsivt grensesnitt for mobil (virtuell joystick, bevegelser)
 
-Animasjonssystem: sprites for helten, fiender og bosser (2–3 bilder per handling)
+Animasjonssystem: sprites for helten, fiender og bosser (4 bilder per handling)
 
 Serverside (Backend)
 
@@ -35,21 +35,16 @@ Kombo-angrep: angrepskjede med økt skade
 
 Blokkering: reduserer skade med 50 % (bruker stamina)
 
-Rulling: unnvikelse med midlertidig usårbarhet
-
-Evner: aktiverbare ferdigheter (f.eks. ildkule eller helbredelse)
-
 Karakterutvikling
 Oppgraderbare attributter:
 ❤️ Helse (maks +100 per nivå)
-⚡ Stamina (flere ruller/blokkeringer)
-🔪 Skade (grunnskade +20 % per nivå)
+⚡ Stamina (spells)
+🔪 Skade
 
 Bosser
 Unike mekanikker:
 🛡️ Stein-golem: sårbar kun for magisk skade
-🌪️ Vindhersker: krever unnvikelse fra tornadoer
-🔥 Drage: angriper med ildbølger (krever skjold med ildresistens)
+🔥 Drage: sårbar kun for fysisk skade
 
 🎨 Grafikk og ressurser
 Stil: pikselkunst med lav oppløsning (16x16 eller 32x32 piksler)
@@ -63,7 +58,7 @@ Animasjoner:
 
 Helt: løping, hopping, angrep med sverd/bue
 
-Fiender: 2–3 typer (gobliner, skjeletter, flygende demoner)
+Fiender: 2–3 typer (gobliner, skjeletter)
 
 📅 Utviklingsplan
 Prototype (2 uker):
@@ -97,8 +92,6 @@ Forberedelse til PvP (grunnsynkronisering)
 💡 Tips for nybegynnere
 
 Start med å lage en MVP (minimal versjon) med én boss og arena
-
-Bruk Phaser.js for enklere animasjoner og kollisjoner
 
 For balanse i progresjon:
 
