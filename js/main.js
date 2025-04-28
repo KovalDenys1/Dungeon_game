@@ -29,6 +29,7 @@ let cameraX = 0;
 let cameraY = 0;
 let lastTime = 0;
 let gameStarted = false;
+let isGameOver = false;
 
 // === UI buttons
 buttons.forEach(button => {
@@ -52,10 +53,10 @@ authButtons.forEach(button => {
 
 // === Setup controls ONCE
 window.addEventListener('keydown', (e) => {
-  if (e.code === 'KeyF') {
+  if (e.code === 'KeyF' && player && !isGameOver) {
     spells[currentSpell](player, canvas.getContext('2d'), projectiles);
   }
-  if (e.code === 'KeyE') {
+  if (e.code === 'KeyE' && player && !isGameOver) {
     meleeAttack();
   }
 });
@@ -106,8 +107,6 @@ function startGame() {
 
   player = new Player(centerX * tileSize * SCALE, centerY * tileSize * SCALE, SCALE, map.map);
 
-  console.log('Player HP:', player.hp, '/', player.maxHp);
-
   enemies = [];
   const enemyCount = 6 + Math.floor(Math.random() * 5);
 
@@ -118,6 +117,7 @@ function startGame() {
   }
 
   lastTime = performance.now();
+  isGameOver = false;
   requestAnimationFrame(gameLoop);
 }
 
@@ -131,6 +131,9 @@ function gameLoop(timeStamp) {
   const deltaTime = timeStamp - lastTime;
   lastTime = timeStamp;
 
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
   cameraX = player.x + player.width / 2 - canvas.width / 2;
   cameraY = player.y + player.height / 2 - canvas.height / 2;
 
@@ -140,60 +143,67 @@ function gameLoop(timeStamp) {
   cameraX = Math.max(0, Math.min(cameraX, mapWidthPx - canvas.width));
   cameraY = Math.max(0, Math.min(cameraY, mapHeightPx - canvas.height));
 
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
   ctx.save();
   ctx.translate(-cameraX, -cameraY);
 
-  // Draw world
-  map.draw(ctx);
-  player.update(deltaTime);
-  player.draw(ctx);
+  if (!isGameOver) {
+    map.draw(ctx);
+    player.update(deltaTime);
+    player.draw(ctx);
 
-  enemies.forEach(enemy => {
-    enemy.update(deltaTime, player, map.map);
-    enemy.draw(ctx);
-  });
-
-  projectiles.forEach(p => {
-    p.update(deltaTime);
-    p.draw(ctx);
-  });
-  projectiles = projectiles.filter(p => !p.markedForDeletion);
-
-  // Fireball collisions
-  projectiles.forEach(projectile => {
     enemies.forEach(enemy => {
-      const dx = (enemy.x + enemy.width / 2) - (projectile.x + 8);
-      const dy = (enemy.y + enemy.height / 2) - (projectile.y + 8);
-      const dist = Math.hypot(dx, dy);
-
-      if (dist < 20) {
-        enemy.hp -= projectile.damage || 10;
-        projectile.markedForDeletion = true;
-      }
+      enemy.update(deltaTime, player, map.map);
+      enemy.draw(ctx);
     });
-  });
 
-  enemies = enemies.filter(enemy => enemy.hp > 0);
+    projectiles.forEach(p => {
+      p.update(deltaTime);
+      p.draw(ctx);
+    });
+    projectiles = projectiles.filter(p => !p.markedForDeletion);
 
-  ctx.restore(); // восстановили координаты!
+    // Fireball collisions
+    projectiles.forEach(projectile => {
+      enemies.forEach(enemy => {
+        const dx = (enemy.x + enemy.width / 2) - (projectile.x + 8);
+        const dy = (enemy.y + enemy.height / 2) - (projectile.y + 8);
+        const dist = Math.hypot(dx, dy);
 
-  // === Теперь рисуем UI (полоску HP игрока) ===
+        if (dist < 20) {
+          enemy.hp -= projectile.damage || 10;
+          projectile.markedForDeletion = true;
+        }
+      });
+    });
+
+    enemies = enemies.filter(enemy => enemy.hp > 0);
+
+    // === Проверка смерти игрока
+    if (player.hp <= 0 && !isGameOver) {
+      isGameOver = true;
+      showGameOverScreen();
+    }
+  }
+
+  ctx.restore();
+
   drawPlayerHpBar(ctx);
+
+  if (isGameOver) {
+    drawGameOverScreen(ctx);
+  }
 
   requestAnimationFrame(gameLoop);
 }
 
 // === Draw player's HP bar (UI)
 function drawPlayerHpBar(ctx) {
-  if (!player) return;
+  if (!player || isGameOver) return;
 
-  const barX = 10;
-  const barY = 10;
-  const barWidth = 150;
-  const barHeight = 15;
+  const barX = 20;
+  const barY = 20;
+  const barWidth = 100;
+  const barHeight = 10;
   const healthRatio = player.hp / player.maxHp;
 
   ctx.fillStyle = 'red';
@@ -204,4 +214,43 @@ function drawPlayerHpBar(ctx) {
 
   ctx.strokeStyle = 'black';
   ctx.strokeRect(barX, barY, barWidth, barHeight);
+}
+
+// === Show "Game Over" screen and button
+function showGameOverScreen() {
+  const gameOverButton = document.createElement('button');
+  gameOverButton.innerText = 'Back to Menu';
+  gameOverButton.style.position = 'absolute';
+  gameOverButton.style.top = '60%';
+  gameOverButton.style.left = '50%';
+  gameOverButton.style.transform = 'translate(-50%, -50%)';
+  gameOverButton.style.fontSize = '24px';
+  gameOverButton.style.padding = '10px 20px';
+  gameOverButton.style.zIndex = '1000';
+  gameOverButton.id = 'gameOverButton';
+
+  document.body.appendChild(gameOverButton);
+
+  gameOverButton.addEventListener('click', () => {
+    document.getElementById('gameOverButton').remove();
+    menu.style.display = 'flex';
+    gameContainer.style.display = 'none';
+    isGameOver = false;
+    player = null;
+    enemies = [];
+    projectiles = [];
+  });
+}
+
+// === Draw "Game Over" text
+function drawGameOverScreen(ctx) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = 'white';
+  ctx.font = '48px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2);
+  ctx.restore();
 }
