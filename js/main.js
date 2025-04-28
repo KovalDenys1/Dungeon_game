@@ -3,47 +3,48 @@ import GameMap from './map.js';
 import Enemy from './enemy.js';
 import { spells } from './spells.js';
 
-let projectiles = [];
+let projectiles = []; // Array to store projectiles
+let player; // Player instance
+let map; // Game map instance
+let enemies = []; // Array to store enemies
 
+// DOM elements
 const menu = document.getElementById('menu');
 const canvas = document.getElementById('gameCanvas');
 const gameContainer = document.getElementById('game-container');
 const buttons = document.querySelectorAll('#menu-buttons button');
 const authButtons = document.querySelectorAll('#auth-buttons button');
 
+// Game constants
 const GAME_WIDTH = 512;
 const GAME_HEIGHT = 288;
 const SCALE = 2;
 
+// Set canvas dimensions
 canvas.width = GAME_WIDTH;
 canvas.height = GAME_HEIGHT;
 canvas.style.width = `${GAME_WIDTH * SCALE}px`;
 canvas.style.height = `${GAME_HEIGHT * SCALE}px`;
 
-let player;
-let currentSpell = 'fireball';
-let map;
-let enemies = [];
+// Game state variables
+let cameraX = 0; // Camera X position
+let cameraY = 0; // Camera Y position
+let lastTime = 0; // Last timestamp for game loop
+let gameStarted = false; // Flag to check if the game has started
+let isGameOver = false; // Flag to check if the game is over
+let animationFrameId = null; // ID for requestAnimationFrame
 
-let cameraX = 0;
-let cameraY = 0;
-let lastTime = 0;
-let gameStarted = false;
-let isGameOver = false;
-
-// === UI buttons
+// Add event listeners to menu buttons
 buttons.forEach(button => {
   button.addEventListener('click', () => {
     const action = button.dataset.action;
     if (action === 'start' && !gameStarted) {
-      gameStarted = true;
-      menu.style.display = 'none';
-      gameContainer.style.display = 'flex';
-      startGame();
+      startGame(); // Start the game when "start" button is clicked
     }
   });
 });
 
+// Add event listeners to authentication buttons
 authButtons.forEach(button => {
   button.addEventListener('click', () => {
     const action = button.dataset.action;
@@ -51,65 +52,78 @@ authButtons.forEach(button => {
   });
 });
 
-// === Setup controls ONCE
+// Add keyboard event listeners
 window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyF' && player && !isGameOver) {
-    spells[currentSpell](player, canvas.getContext('2d'), projectiles);
+    spells.fireball(player, canvas.getContext('2d'), projectiles); // Cast fireball spell
   }
   if (e.code === 'KeyE' && player && !isGameOver) {
-    meleeAttack();
+    meleeAttack(); // Perform melee attack
   }
 });
 
-// === Melee attack function
+// Function to handle melee attacks
 function meleeAttack() {
-  const meleeRange = 30;
+  const meleeRange = 30; // Range for melee attack
 
   enemies.forEach(enemy => {
     const dx = enemy.x - player.x;
     const dy = enemy.y - player.y;
-    const dist = Math.hypot(dx, dy);
+    const dist = Math.hypot(dx, dy); // Calculate distance to enemy
 
     if (dist < meleeRange) {
-      enemy.hp -= 20;
+      enemy.hp -= 20; // Reduce enemy health if within range
     }
   });
 }
 
-// === Find a free tile
+// Function to find a free tile on the map
 function getFreeTile(map) {
   const height = map.length;
   const width = map[0].length;
   while (true) {
     const x = Math.floor(Math.random() * width);
     const y = Math.floor(Math.random() * height);
-    if (map[y][x] === 0) {
+    if (map[y][x] === 0) { // Check if the tile is free
       return { x, y };
     }
   }
 }
 
-// === Start game
+// Function to start the game
 function startGame() {
+  console.log('Start new game');
+
+  // Stop the previous animation if it exists
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  }
+
   const ctx = canvas.getContext('2d');
-  map = new GameMap(16, SCALE);
+
+  map = new GameMap(16, SCALE); // Initialize the game map
 
   const tileSize = 16;
 
+  // Find the center of the map
   let centerX = Math.floor(map.map[0].length / 2);
   let centerY = Math.floor(map.map.length / 2);
 
+  // If the center is not free, find a free tile
   if (map.map[centerY][centerX] !== 0) {
     const spawn = getFreeTile(map.map);
     centerX = spawn.x;
     centerY = spawn.y;
   }
 
+  // Initialize the player
   player = new Player(centerX * tileSize * SCALE, centerY * tileSize * SCALE, SCALE, map.map);
+  enemies = []; // Reset enemies
+  projectiles = []; // Reset projectiles
 
-  enemies = [];
+  // Spawn enemies
   const enemyCount = 6 + Math.floor(Math.random() * 5);
-
   for (let i = 0; i < enemyCount; i++) {
     const spawn = getFreeTile(map.map);
     const type = Math.random() < 0.5 ? 'skeleton' : 'vampire';
@@ -118,51 +132,62 @@ function startGame() {
 
   lastTime = performance.now();
   isGameOver = false;
-  requestAnimationFrame(gameLoop);
+  gameStarted = true;
+
+  // Hide the menu and show the game container
+  menu.style.display = 'none';
+  gameContainer.style.display = 'flex';
+
+  // Start the game loop
+  animationFrameId = requestAnimationFrame(gameLoop);
 }
 
-// === Main game loop
+// Main game loop
 function gameLoop(timeStamp) {
   if (!player) {
-    requestAnimationFrame(gameLoop);
+    animationFrameId = requestAnimationFrame(gameLoop);
     return;
   }
 
-  const deltaTime = timeStamp - lastTime;
+  const deltaTime = timeStamp - lastTime; // Calculate time difference
   lastTime = timeStamp;
 
   const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
 
+  // Update camera position
   cameraX = player.x + player.width / 2 - canvas.width / 2;
   cameraY = player.y + player.height / 2 - canvas.height / 2;
 
   const mapWidthPx = map.map[0].length * 16 * SCALE;
   const mapHeightPx = map.map.length * 16 * SCALE;
 
+  // Clamp camera position to map boundaries
   cameraX = Math.max(0, Math.min(cameraX, mapWidthPx - canvas.width));
   cameraY = Math.max(0, Math.min(cameraY, mapHeightPx - canvas.height));
 
   ctx.save();
-  ctx.translate(-cameraX, -cameraY);
+  ctx.translate(-cameraX, -cameraY); // Apply camera translation
 
   if (!isGameOver) {
-    map.draw(ctx);
-    player.update(deltaTime);
-    player.draw(ctx);
+    map.draw(ctx); // Draw the map
+    player.update(deltaTime); // Update the player
+    player.draw(ctx); // Draw the player
 
+    // Update and draw enemies
     enemies.forEach(enemy => {
       enemy.update(deltaTime, player, map.map);
       enemy.draw(ctx);
     });
 
+    // Update and draw projectiles
     projectiles.forEach(p => {
       p.update(deltaTime);
       p.draw(ctx);
     });
-    projectiles = projectiles.filter(p => !p.markedForDeletion);
+    projectiles = projectiles.filter(p => !p.markedForDeletion); // Remove deleted projectiles
 
-    // Fireball collisions
+    // Check for collisions between projectiles and enemies
     projectiles.forEach(projectile => {
       enemies.forEach(enemy => {
         const dx = (enemy.x + enemy.width / 2) - (projectile.x + 8);
@@ -170,33 +195,33 @@ function gameLoop(timeStamp) {
         const dist = Math.hypot(dx, dy);
 
         if (dist < 20) {
-          enemy.hp -= projectile.damage || 10;
-          projectile.markedForDeletion = true;
+          enemy.hp -= projectile.damage || 10; // Reduce enemy health
+          projectile.markedForDeletion = true; // Mark projectile for deletion
         }
       });
     });
 
-    enemies = enemies.filter(enemy => enemy.hp > 0);
+    enemies = enemies.filter(enemy => enemy.hp > 0); // Remove dead enemies
 
-    // === Проверка смерти игрока
-    if (player.hp <= 0 && !isGameOver) {
+    // Check if the player is dead
+    if (player.hp <= 0) {
       isGameOver = true;
-      showGameOverScreen();
+      showGameOverScreen(); // Show game over screen
     }
   }
 
   ctx.restore();
 
-  drawPlayerHpBar(ctx);
+  drawPlayerHpBar(ctx); // Draw the player's health bar
 
   if (isGameOver) {
-    drawGameOverScreen(ctx);
+    drawGameOverScreen(ctx); // Draw the game over screen
   }
 
-  requestAnimationFrame(gameLoop);
+  animationFrameId = requestAnimationFrame(gameLoop); // Continue the game loop
 }
 
-// === Draw player's HP bar (UI)
+// Function to draw the player's health bar
 function drawPlayerHpBar(ctx) {
   if (!player || isGameOver) return;
 
@@ -207,16 +232,16 @@ function drawPlayerHpBar(ctx) {
   const healthRatio = player.hp / player.maxHp;
 
   ctx.fillStyle = 'red';
-  ctx.fillRect(barX, barY, barWidth, barHeight);
+  ctx.fillRect(barX, barY, barWidth, barHeight); // Draw the background bar
 
   ctx.fillStyle = 'lime';
-  ctx.fillRect(barX, barY, barWidth * Math.max(healthRatio, 0), barHeight);
+  ctx.fillRect(barX, barY, barWidth * Math.max(healthRatio, 0), barHeight); // Draw the health bar
 
   ctx.strokeStyle = 'black';
-  ctx.strokeRect(barX, barY, barWidth, barHeight);
+  ctx.strokeRect(barX, barY, barWidth, barHeight); // Draw the border
 }
 
-// === Show "Game Over" screen and button
+// Function to show the game over screen
 function showGameOverScreen() {
   const gameOverButton = document.createElement('button');
   gameOverButton.innerText = 'Back to Menu';
@@ -231,26 +256,34 @@ function showGameOverScreen() {
 
   document.body.appendChild(gameOverButton);
 
+  // Add event listener to return to the menu
   gameOverButton.addEventListener('click', () => {
     document.getElementById('gameOverButton').remove();
-    menu.style.display = 'flex';
+    menu.style.display = 'block';
     gameContainer.style.display = 'none';
-    isGameOver = false;
     player = null;
     enemies = [];
     projectiles = [];
+    gameStarted = false;
+    isGameOver = false;
+
+    // Stop the game loop
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
   });
 }
 
-// === Draw "Game Over" text
+// Function to draw the game over screen
 function drawGameOverScreen(ctx) {
   ctx.save();
   ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, canvas.width, canvas.height); // Draw a semi-transparent overlay
 
   ctx.fillStyle = 'white';
   ctx.font = '48px Arial';
   ctx.textAlign = 'center';
-  ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2);
+  ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2); // Display "Game Over" text
   ctx.restore();
 }

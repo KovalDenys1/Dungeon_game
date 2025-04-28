@@ -1,81 +1,97 @@
 export default class Enemy {
   constructor(x, y, scale, type = 'skeleton') {
+    // Initialize enemy position and scale
     this.x = x;
     this.y = y;
     this.scale = scale;
 
+    // Enemy dimensions
     this.width = 16 * scale;
     this.height = 16 * scale;
 
+    // Load the enemy sprite sheet
     this.image = new Image();
     this.image.src = `./assets/enemies/${type}_spritesheet.png`;
 
-    this.frameIndex = 0;
-    this.frameCount = 4;
-    this.frameTimer = 0;
-    this.frameInterval = 200;
+    // Animation properties
+    this.frameIndex = 0; // Current animation frame index
+    this.frameCount = 4; // Total number of animation frames
+    this.frameTimer = 0; // Timer to control frame updates
+    this.frameInterval = 200; // Interval between frame updates (in ms)
 
-    this.speed = type === 'vampire' ? 0.8 : 0.5;
+    // Movement and direction
+    this.facingLeft = Math.random() > 0.5; // Random initial direction
+    this.speed = type === 'vampire' ? 0.8 : 0.5; // Speed depends on enemy type
 
-    this.facingLeft = false;
+    // Health properties
+    this.hp = type === 'vampire' ? 50 : 30; // Health depends on enemy type
+    this.maxHp = this.hp; // Maximum health
 
-    this.hp = type === 'vampire' ? 50 : 30;
-    this.maxHp = this.hp;
+    // Aggro and chasing behavior
+    this.agroRadius = 40 * scale; // Radius within which the enemy detects the player
+    this.isChasing = false; // Whether the enemy is chasing the player
+    this.chaseCooldown = 0; // Time since the enemy stopped chasing
+    this.chaseCooldownMax = 3000; // Maximum cooldown time before stopping chase
 
-    this.agroRadius = 100 * scale;
-    this.isChasing = false;
-    this.chaseCooldown = 0;
-    this.chaseCooldownMax = 3000;
-
-    // === Добавлено для атаки игрока:
-    this.attackCooldown = 0; // сколько осталось до следующей атаки
-    this.attackRate = 1000;  // монстр атакует раз в 1 секунду
-    this.damage = 10;        // сколько урона наносит монстр
+    // Attack properties
+    this.attackCooldown = 0; // Time left until the next attack
+    this.attackRate = 1000; // Enemy attacks once per second
+    this.damage = 10; // Damage dealt to the player per attack
   }
 
+  // Update enemy state
   update(deltaTime, player, map) {
+    // Update animation frame timer
     this.frameTimer += deltaTime;
     if (this.frameTimer > this.frameInterval) {
-      this.frameIndex = (this.frameIndex + 1) % this.frameCount;
-      this.frameTimer = 0;
+      this.frameIndex = (this.frameIndex + 1) % this.frameCount; // Cycle through animation frames
+      this.frameTimer = 0; // Reset the frame timer
     }
 
+    // Decrease attack cooldown
     this.attackCooldown -= deltaTime;
 
+    // Calculate distance to the player
     const dx = player.x - this.x;
     const dy = player.y - this.y;
     const dist = Math.hypot(dx, dy);
 
+    // Check if the player is within the aggro radius
     if (dist < this.agroRadius) {
-      this.isChasing = true;
-      this.chaseCooldown = 0;
+      this.isChasing = true; // Start chasing the player
+      this.chaseCooldown = 0; // Reset chase cooldown
     } else if (this.isChasing) {
+      // If chasing, increase chase cooldown
       this.chaseCooldown += deltaTime;
       if (this.chaseCooldown > this.chaseCooldownMax) {
-        this.isChasing = false;
+        this.isChasing = false; // Stop chasing after cooldown
       }
     }
 
     if (this.isChasing) {
+      // Move towards the player
       this.moveTowards(player.x, player.y, map);
 
-      // === Атака игрока:
+      // Attack the player if close enough and cooldown is over
       if (dist < 20 && this.attackCooldown <= 0) {
-        player.hp -= this.damage;
-        this.attackCooldown = this.attackRate; // Сброс кулдауна после атаки
+        player.hp -= this.damage; // Reduce player's health
+        this.attackCooldown = this.attackRate; // Reset attack cooldown
       }
     } else {
+      // Patrol movement when not chasing
       this.patrolMove(map);
     }
   }
 
+  // Move towards a target position
   moveTowards(targetX, targetY, map) {
     const dx = targetX - this.x;
     const dy = targetY - this.y;
     const dist = Math.hypot(dx, dy);
 
-    if (dist === 0) return;
+    if (dist === 0) return; // Avoid division by zero
 
+    // Calculate movement deltas
     const moveX = (dx / dist) * this.speed;
     const moveY = (dy / dist) * this.speed;
 
@@ -85,90 +101,92 @@ export default class Enemy {
     const absDx = Math.abs(dx);
     const absDy = Math.abs(dy);
 
+    // Prioritize movement along the axis with the greater distance
     if (absDx > absDy) {
       if (!this.isColliding(nextX, this.y, map)) {
-        this.x = nextX;
-        this.facingLeft = moveX < 0;
+        this.x = nextX; // Move along X-axis
+        this.facingLeft = moveX < 0; // Update facing direction
       } else if (!this.isColliding(this.x, nextY, map)) {
-        this.y = nextY;
+        this.y = nextY; // Move along Y-axis
       }
     } else {
       if (!this.isColliding(this.x, nextY, map)) {
-        this.y = nextY;
+        this.y = nextY; // Move along Y-axis
       } else if (!this.isColliding(nextX, this.y, map)) {
-        this.x = nextX;
-        this.facingLeft = moveX < 0;
+        this.x = nextX; // Move along X-axis
+        this.facingLeft = moveX < 0; // Update facing direction
       }
     }
   }
 
+  // Patrol movement when not chasing the player
   patrolMove(map) {
-    const moveX = this.speed * (Math.random() > 0.5 ? 1 : -1);
-    const moveY = this.speed * (Math.random() > 0.5 ? 1 : -1);
-
+    const moveX = this.speed * (this.facingLeft ? -1 : 1); // Move left or right
     const nextX = this.x + moveX;
-    const nextY = this.y + moveY;
 
     if (!this.isColliding(nextX, this.y, map)) {
-      this.x = nextX;
-      this.facingLeft = moveX < 0;
-    }
-    if (!this.isColliding(this.x, nextY, map)) {
-      this.y = nextY;
+      this.x = nextX; // Move if no collision
+    } else {
+      this.facingLeft = !this.facingLeft; // Change direction on collision
     }
   }
 
+  // Check for collisions with the map
   isColliding(x, y, map) {
-    const tileSize = 16 * this.scale;
+    const tileSize = 16 * this.scale; // Tile size based on scale
     const corners = [
-      [x, y],
-      [x + this.width - 1, y],
-      [x, y + this.height - 1],
-      [x + this.width - 1, y + this.height - 1]
+      [x, y], // Top-left corner
+      [x + this.width - 1, y], // Top-right corner
+      [x, y + this.height - 1], // Bottom-left corner
+      [x + this.width - 1, y + this.height - 1] // Bottom-right corner
     ];
 
+    // Check each corner for collision with non-walkable tiles
     for (const [cx, cy] of corners) {
       const tileX = Math.floor(cx / tileSize);
       const tileY = Math.floor(cy / tileSize);
-      if (map?.[tileY]?.[tileX] !== 0) return true;
+      if (map?.[tileY]?.[tileX] !== 0) return true; // Collision detected
     }
-    return false;
+    return false; // No collision
   }
 
+  // Draw the enemy on the canvas
   draw(ctx) {
-    const flip = this.facingLeft;
+    const flip = this.facingLeft; // Determine if the sprite should be flipped
 
-    ctx.save();
+    ctx.save(); // Save the current canvas state
     if (flip) {
+      // Flip the sprite horizontally
       ctx.translate(this.x + this.width, this.y);
       ctx.scale(-1, 1);
     } else {
+      // Draw the sprite normally
       ctx.translate(this.x, this.y);
     }
 
+    // Draw the enemy sprite
     ctx.drawImage(
       this.image,
-      this.frameIndex * 16, 0,
-      16, 16,
-      0, 0,
-      this.width,
-      this.height
+      this.frameIndex * 16, 0, // Source position in the sprite sheet
+      16, 16, // Source dimensions
+      0, 0, // Destination position on the canvas
+      this.width, this.height // Destination dimensions
     );
 
-    ctx.restore();
+    ctx.restore(); // Restore the canvas state
 
-    // === HP бар над врагом
+    // Draw the health bar above the enemy
     const barWidth = this.width;
     const barHeight = 4;
     const healthRatio = this.hp / this.maxHp;
 
-    ctx.fillStyle = 'red';
+    ctx.fillStyle = 'red'; // Background of the health bar
     ctx.fillRect(this.x, this.y - 10, barWidth, barHeight);
 
-    ctx.fillStyle = 'lime';
+    ctx.fillStyle = 'lime'; // Foreground of the health bar
     ctx.fillRect(this.x, this.y - 10, barWidth * healthRatio, barHeight);
 
-    ctx.strokeStyle = 'black';
+    ctx.strokeStyle = 'black'; // Border of the health bar
     ctx.strokeRect(this.x, this.y - 10, barWidth, barHeight);
   }
 }
