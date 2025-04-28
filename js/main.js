@@ -78,13 +78,26 @@ function meleeAttack() {
 }
 
 // Function to find a free tile on the map
-function getFreeTile(map) {
+function getFreeTile(map, enemyWidthTiles = 2, enemyHeightTiles = 2) {
   const height = map.length;
   const width = map[0].length;
+
   while (true) {
-    const x = Math.floor(Math.random() * width);
-    const y = Math.floor(Math.random() * height);
-    if (map[y][x] === 0) { // Check if the tile is free
+    const x = Math.floor(Math.random() * (width - enemyWidthTiles));
+    const y = Math.floor(Math.random() * (height - enemyHeightTiles));
+
+    let free = true;
+    for (let dy = 0; dy < enemyHeightTiles; dy++) {
+      for (let dx = 0; dx < enemyWidthTiles; dx++) {
+        if (map[y + dy][x + dx] !== 0) {
+          free = false;
+          break;
+        }
+      }
+      if (!free) break;
+    }
+
+    if (free) {
       return { x, y };
     }
   }
