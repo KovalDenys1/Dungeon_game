@@ -40,6 +40,8 @@ buttons.forEach(button => {
     const action = button.dataset.action;
     if (action === 'start' && !gameStarted) {
       startGame(); // Start the game when "start" button is clicked
+    } else if (['character', 'shop', 'exit'].includes(action)) {
+      alert(`${action.charAt(0).toUpperCase() + action.slice(1)} is under development.`);
     }
   });
 });
@@ -105,8 +107,6 @@ function getFreeTile(map, enemyWidthTiles = 2, enemyHeightTiles = 2) {
 
 // Function to start the game
 function startGame() {
-  console.log('Start new game');
-
   // Stop the previous animation if it exists
   if (animationFrameId) {
     cancelAnimationFrame(animationFrameId);

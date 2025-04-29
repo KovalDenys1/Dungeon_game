@@ -43,7 +43,7 @@ export default class Player {
 
   // Update player state
   update(deltaTime) {
-    // Обновляем анимацию
+    // Update animation
     this.frameTimer += deltaTime;
     if (this.frameTimer > this.frameInterval) {
       this.frameIndex = (this.frameIndex + 1) % this.frameCount;
@@ -64,12 +64,12 @@ export default class Player {
     if (this.keys['KeyW'] || this.keys['ArrowUp']) dy = -this.speed;
     if (this.keys['KeyS'] || this.keys['ArrowDown']) dy = this.speed;
   
-    // Сначала пытаемся двигаться по оси X
+    // First, try to move along the X-axis
     if (!this.isColliding(this.x + dx, this.y)) {
       this.x += dx;
     }
   
-    // Потом по оси Y
+    // Then, try to move along the Y-axis
     if (!this.isColliding(this.x, this.y + dy)) {
       this.y += dy;
     }
