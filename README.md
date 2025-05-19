@@ -37,6 +37,6 @@ This is a 2D adventure game built with JavaScript and HTML5 Canvas. You play as 
 ## 📂 Run Locally
 
 ```bash
-git clone https://github.com/DenysKoval1/Game.git
+git clone [https://github.com/DenysKoval1/Game.git](https://github.com/KovalDenys1/Dungeon_game.git)
 cd Game
 # Open index.html in your browser
