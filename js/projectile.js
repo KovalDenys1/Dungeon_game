@@ -22,7 +22,7 @@ export default class FireballProjectile {
 
         // Load the fireball sprite image
         this.image = new Image();
-        this.image.src = './assets/spells/fireball_strip.png';
+        this.image.src = 'Assets/spells/fireball_strip.png';
 
         // Flag to mark the projectile for deletion
         this.markedForDeletion = false;

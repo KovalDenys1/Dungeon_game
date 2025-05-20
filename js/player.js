@@ -15,7 +15,7 @@ export default class Player {
 
     // Load the player sprite sheet
     this.image = new Image();
-    this.image.src = './assets/hero/hero_spritesheet.png';
+    this.image.src = 'Assets/hero/hero_spritesheet.png';
 
     // Animation state
     this.frameIndex = 0; // Current animation frame index

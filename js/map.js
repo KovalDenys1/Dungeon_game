@@ -27,7 +27,7 @@ export default class GameMap {
 
     // Load the tileset image
     this.image = new Image();
-    this.image.src = './assets/map/tileset.png';
+    this.image.src = 'Assets/map/tileset.png';
   }
 
   draw(ctx) {

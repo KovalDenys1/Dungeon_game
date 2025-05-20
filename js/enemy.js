@@ -11,7 +11,7 @@ export default class Enemy {
 
     // Load the enemy sprite sheet
     this.image = new Image();
-    this.image.src = `./assets/enemies/${type}_spritesheet.png`;
+    this.image.src = `Assets/enemies/${type}_spritesheet.png`;
 
     // Animation properties
     this.frameIndex = 0; // Current animation frame index
